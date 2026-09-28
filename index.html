@@ -242,6 +242,10 @@
       <label class="field-label" for="f-status" title="확인완료: 담당자가 원문을 직접 확인했어요 / 예시: 화면 구성을 보여주는 샘플이에요 / 확인 필요: 원본이 사라져 다시 확인해야 해요">확인 상태</label>
       <select id="f-status"><option value="">전체</option></select>
     </div>
+    <div class="group">
+      <label class="field-label" for="f-period" title="수요일부터 다음 화요일까지를 한 주로 묶어서 볼 수 있어요">게시 기간</label>
+      <select id="f-period"><option value="">전체</option></select>
+    </div>
     <div class="spacer"></div>
     <span class="count-pill" id="result-count">0건 표시 중</span>
   </div>
@@ -389,7 +393,7 @@
     }
   ];
 
-  var state = { brand:"", channel:"", status:"", selected:new Set() };
+  var state = { brand:"", channel:"", status:"", period:"", selected:new Set() };
 
   // ---- 주차(수요일~화요일) 계산: 게시일 문자열에서 날짜를 추출해 그 주의 수~화 구간을 구한다 ----
   function pad2(n){ return (n<10?"0":"")+n; }
@@ -448,9 +452,24 @@
   var brandSel = document.getElementById("f-brand");
   var channelSel = document.getElementById("f-channel");
   var statusSel = document.getElementById("f-status");
+  var periodSel = document.getElementById("f-period");
   fillSelect(brandSel, uniq(ITEMS.map(function(i){return i.brand;})));
   fillSelect(channelSel, uniq(ITEMS.map(function(i){return i.channel;})), channelShort);
   fillSelect(statusSel, uniq(ITEMS.map(function(i){return i.status;})), statusLabel);
+
+  var cyclesByRecency = uniq(ITEMS.map(function(i){return i._cycle;}))
+    .filter(function(c){ return c !== "확인필요"; })
+    .sort(function(a,b){
+      var ai = ITEMS.filter(function(i){return i._cycle===a;})[0]._cycleStart;
+      var bi = ITEMS.filter(function(i){return i._cycle===b;})[0]._cycleStart;
+      return bi - ai;
+    });
+  fillSelect(periodSel, cyclesByRecency, function(c){ return c===CURRENT_CYCLE.label ? c+" (이번 주)" : c; });
+  if(uniq(ITEMS.map(function(i){return i._cycle;})).indexOf("확인필요")!==-1){
+    var etcOpt = document.createElement("option");
+    etcOpt.value = "확인필요"; etcOpt.textContent = "게시일 확인 필요";
+    periodSel.appendChild(etcOpt);
+  }
 
   function render(){
     var grid = document.getElementById("grid");
@@ -458,7 +477,8 @@
     var filtered = ITEMS.filter(function(i){
       return (!state.brand || i.brand===state.brand)
         && (!state.channel || i.channel===state.channel)
-        && (!state.status || i.status===state.status);
+        && (!state.status || i.status===state.status)
+        && (!state.period || i._cycle===state.period);
     });
     document.getElementById("result-count").textContent = filtered.length + "건 표시 중";
 
@@ -504,6 +524,7 @@
   brandSel.addEventListener("change", function(){ state.brand=brandSel.value; render(); });
   channelSel.addEventListener("change", function(){ state.channel=channelSel.value; render(); });
   statusSel.addEventListener("change", function(){ state.status=statusSel.value; render(); });
+  periodSel.addEventListener("change", function(){ state.period=periodSel.value; render(); });
 
   document.getElementById("clear-btn").addEventListener("click", function(){
     state.selected.clear();
