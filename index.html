@@ -337,22 +337,6 @@
       note:"Meta 광고 라이브러리 · 신규고객 선착순 5천명 멘탈키트 증정"
     },
     {
-      brand:"한국투자증권", channel:"인스타그램/캐러셀이미지",
-      title:"무신사 제휴 혜택 이벤트",
-      url:"https://www.instagram.com/p/DaeJRVKktnf/",
-      thumb:"images/e480dde3260e4df75528e1e82c3ef6e5.jpg",
-      date:"2026-07-06", topic:"브랜드시즌협업형", status:"실측",
-      note:"@bankiszone · 무신사 제휴 혜택 + 모의투자대회 연계 이벤트"
-    },
-    {
-      brand:"NH투자증권", channel:"인스타그램/캐러셀이미지",
-      title:"IRP 입금 배민 쿠폰 이벤트",
-      url:"https://www.instagram.com/p/DYVr-dvkmeo/",
-      thumb:"images/4c095fe1c1068f855696a475f899cdcf.jpg",
-      date:"2026-05-14", topic:"상품가입유도형", status:"실측",
-      note:"@nhinvest_official · 기간(05.01~08.31) 내 IRP 순입금 구간별 배민 쿠폰 추첨"
-    },
-    {
       brand:"NH투자증권", channel:"DA",
       title:"나무증권 수수료 0원 이벤트",
       url:"https://www.facebook.com/ads/library/?id=1121436910408208",
@@ -470,6 +454,10 @@
     var etcOpt = document.createElement("option");
     etcOpt.value = "확인필요"; etcOpt.textContent = "게시일 확인 필요";
     periodSel.appendChild(etcOpt);
+  }
+  if(cyclesByRecency.indexOf(CURRENT_CYCLE.label) !== -1){
+    periodSel.value = CURRENT_CYCLE.label;
+    state.period = CURRENT_CYCLE.label;
   }
 
   function thumbKey(item){ return "thumb_ovr::"+item.brand+"|"+item.title; }
