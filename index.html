@@ -529,7 +529,32 @@
 
   function ymd(d){ return String(d.getFullYear()).slice(2)+pad2(d.getMonth()+1)+pad2(d.getDate()); }
 
-  function buildReportPageHTML(headerTitle, items){
+  var thumbFitCache = {};
+  function fitImageToDataURL(url, w, h){
+    var key = url+"|"+w+"x"+h;
+    if(thumbFitCache[key]) return Promise.resolve(thumbFitCache[key]);
+    return new Promise(function(resolve){
+      var img = new Image();
+      img.onload = function(){
+        var canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000"; ctx.fillRect(0,0,w,h);
+        var scale = Math.min(w/img.naturalWidth, h/img.naturalHeight);
+        var nw = img.naturalWidth*scale, nh = img.naturalHeight*scale;
+        ctx.drawImage(img, (w-nw)/2, (h-nh)/2, nw, nh);
+        var data;
+        try { data = canvas.toDataURL("image/jpeg", 0.9); }
+        catch(e){ data = null; }
+        thumbFitCache[key] = data;
+        resolve(data);
+      };
+      img.onerror = function(){ resolve(null); };
+      img.src = url;
+    });
+  }
+
+  function buildReportPageHTML(headerTitle, items, thumbMap){
     var groups = [];
     items.forEach(function(it){
       var last = groups[groups.length-1];
@@ -552,8 +577,9 @@
 
     html += '<tr>'+labelCell('이미지');
     items.forEach(function(it){
-      var img = it.thumb
-        ? '<img src="'+it.thumb+'" crossorigin="anonymous" style="width:100%;height:220px;object-fit:contain;background:#000;">'
+      var fitted = thumbMap[it.brand+"|"+it.title];
+      var img = fitted
+        ? '<img src="'+fitted+'" style="display:block;width:100%;height:220px;">'
         : '<div style="width:100%;height:220px;display:flex;align-items:center;justify-content:center;color:#999;background:#f0f0f0;">썸네일 없음</div>';
       html += '<td style="border:1px solid #ccc;padding:8px;">'+img+'</td>';
     });
@@ -605,6 +631,13 @@
       }
       var headerTitle = reportCode + " (모니터링 기간 | " + (periodStr || "선택 콘텐츠") + ")";
 
+      var thumbMap = {};
+      await Promise.all(chosen.map(async function(it){
+        if(!it.thumb) return;
+        var data = await fitImageToDataURL(it.thumb, 720, 440);
+        if(data) thumbMap[it.brand+"|"+it.title] = data;
+      }));
+
       var pageSize = 4;
       var pages = [];
       for(var i=0;i<chosen.length;i+=pageSize){ pages.push(chosen.slice(i,i+pageSize)); }
@@ -618,7 +651,7 @@
       var doc = new jsPDFCtor({ orientation:"landscape", unit:"pt", format:"a4" });
 
       for(var p=0; p<pages.length; p++){
-        container.innerHTML = buildReportPageHTML(headerTitle, pages[p]);
+        container.innerHTML = buildReportPageHTML(headerTitle, pages[p], thumbMap);
         var imgs = container.querySelectorAll("img");
         await Promise.all(Array.from(imgs).map(function(im){
           return im.complete ? Promise.resolve() : new Promise(function(res){ im.onload=res; im.onerror=res; });
@@ -635,7 +668,7 @@
 
       document.body.removeChild(container);
 
-      var fname = reportCode + "_경쟁사 SNS 모니터링.pdf";
+      var fname = ymd(new Date()) + "_SNS모니터링.pdf";
       var blob = doc.output("blob");
 
       if(window.claude && window.claude.use){
