@@ -739,7 +739,7 @@
         if(data) thumbMap[it.brand+"|"+it.title] = data;
       }));
 
-      var pageSize = 4;
+      var pageSize = 2;
       var pages = [];
       for(var i=0;i<chosen.length;i+=pageSize){ pages.push(chosen.slice(i,i+pageSize)); }
 
@@ -749,10 +749,10 @@
       container.style.top = "0";
       document.body.appendChild(container);
 
-      var doc = new jsPDFCtor({ orientation:"landscape", unit:"pt", format:"a4" });
+      var doc = new jsPDFCtor({ orientation:"portrait", unit:"pt", format:"a4" });
       var pageW = doc.internal.pageSize.getWidth();
       var pageH = doc.internal.pageSize.getHeight();
-      // 페이지마다 항목 수가 달라도 셀 크기가 같아 보이도록, 4칸짜리 풀 페이지 기준으로 배율을 고정한다
+      // 페이지마다 항목 수가 달라도 셀 크기가 같아 보이도록, 한 페이지 최대 칸수 기준으로 배율을 고정한다
       var fullPagePxWidth = (pageSize*colWidth + labelWidth + 40) * 2;
       var masterRatio = (pageW-40) / fullPagePxWidth;
 
