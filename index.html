@@ -220,7 +220,7 @@
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <div class="wrap">
   <header class="page">
@@ -511,52 +511,148 @@
     updateBottombar();
   });
 
-  document.getElementById("pdf-btn").addEventListener("click", function(){
+  var BRAND_COLOR = {
+    "미래에셋증권":"#F26A21",
+    "삼성증권":"#1428A0",
+    "키움증권":"#E6007E",
+    "한국투자증권":"#6B4FA0",
+    "토스증권":"#0064FF",
+    "NH투자증권":"#00A651",
+    "신한투자증권":"#0046FF"
+  };
+  var CHANNEL_LABEL = {
+    "인스타그램/캐러셀이미지":"인스타그램 / 캐러셀",
+    "인스타그램/영상":"인스타그램 / 릴스",
+    "유튜브/영상":"유튜브 / 영상",
+    "DA":"DA"
+  };
+
+  function ymd(d){ return String(d.getFullYear()).slice(2)+pad2(d.getMonth()+1)+pad2(d.getDate()); }
+
+  function buildReportPageHTML(headerTitle, items){
+    var groups = [];
+    items.forEach(function(it){
+      var last = groups[groups.length-1];
+      if(last && last.brand===it.brand){ last.items.push(it); } else { groups.push({brand:it.brand, items:[it]}); }
+    });
+    var colWidth = 380, labelWidth = 120;
+    var html = '<div style="font-family:\'Noto Sans KR\',sans-serif;width:'+(items.length*colWidth+labelWidth+40)+'px;padding:20px;background:#fff;color:#111;">';
+    html += '<div style="font-size:20px;font-weight:800;margin-bottom:14px;">'+headerTitle+'</div>';
+    html += '<table style="border-collapse:collapse;width:100%;table-layout:fixed;">';
+    html += '<colgroup><col style="width:'+labelWidth+'px;">'+items.map(function(){return '<col style="width:'+colWidth+'px;">';}).join('')+'</colgroup>';
+
+    function labelCell(label){ return '<td style="border:1px solid #ccc;padding:10px;font-weight:700;background:#f5f5f5;text-align:center;">'+label+'</td>'; }
+
+    html += '<tr>'+labelCell('경쟁사명');
+    groups.forEach(function(g){
+      var color = BRAND_COLOR[g.brand] || '#333';
+      html += '<td colspan="'+g.items.length+'" style="border:1px solid #ccc;padding:12px;background:'+color+';color:#fff;font-weight:800;text-align:center;font-size:16px;">'+g.brand+'</td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('이미지');
+    items.forEach(function(it){
+      var img = it.thumb
+        ? '<img src="'+it.thumb+'" crossorigin="anonymous" style="width:100%;height:220px;object-fit:contain;background:#000;">'
+        : '<div style="width:100%;height:220px;display:flex;align-items:center;justify-content:center;color:#999;background:#f0f0f0;">썸네일 없음</div>';
+      html += '<td style="border:1px solid #ccc;padding:8px;">'+img+'</td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('타이틀');
+    items.forEach(function(it){
+      html += '<td style="border:1px solid #ccc;padding:10px;text-align:center;font-size:13px;line-height:1.4;word-break:keep-all;">'+it.title+'</td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('URL');
+    items.forEach(function(it){
+      html += '<td style="border:1px solid #ccc;padding:10px;text-align:center;font-size:11px;word-break:break-all;color:#1a56db;">'+it.url+'</td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('채널/유형');
+    items.forEach(function(it){
+      html += '<td style="border:1px solid #ccc;padding:10px;text-align:center;font-size:12px;">'+(CHANNEL_LABEL[it.channel]||it.channel)+'</td>';
+    });
+    html += '</tr>';
+
+    html += '</table></div>';
+    return html;
+  }
+
+  document.getElementById("pdf-btn").addEventListener("click", async function(){
     var chosen = ITEMS.filter(function(i){ return state.selected.has(i.brand+"|"+i.title); });
     if(!chosen.length) return;
 
     var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
-    if(!jsPDFCtor){ alert("PDF 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."); return; }
-    var doc = new jsPDFCtor({ orientation:"landscape", unit:"pt", format:"a4" });
+    if(!jsPDFCtor || !window.html2canvas){ alert("PDF 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."); return; }
 
-    doc.setFont("helvetica","bold");
-    doc.setFontSize(16);
-    doc.text("경쟁사 SNS 콘텐츠 비교표", 40, 40);
-    doc.setFont("helvetica","normal");
-    doc.setFontSize(9);
-    doc.setTextColor(110,110,110);
-    var today = new Date().toISOString().slice(0,10);
-    doc.text("생성일: " + today + "  |  선택 콘텐츠 " + chosen.length + "건", 40, 56);
+    var pdfBtn = document.getElementById("pdf-btn");
+    pdfBtn.disabled = true;
+    var pdfBtnLabel = pdfBtn.textContent;
+    pdfBtn.textContent = "PDF 만드는 중...";
 
-    var rows = chosen.map(function(i){
-      return [i.brand, i.title, channelShort(i.channel), i.date, i.topic, statusLabel(i.status), i.url];
-    });
+    try {
+      var today = new Date();
+      var reportCode = ymd(today);
+      var dates = chosen.map(function(i){ return extractDate(i.date); }).filter(Boolean);
+      var periodStr = "";
+      if(dates.length){
+        var minD = new Date(Math.min.apply(null, dates));
+        var maxD = new Date(Math.max.apply(null, dates));
+        periodStr = ymd(minD)+"~"+ymd(maxD);
+      }
+      var headerTitle = reportCode + " (모니터링 기간 | " + (periodStr || "선택 콘텐츠") + ")";
 
-    doc.autoTable({
-      startY: 72,
-      head: [["경쟁사","콘텐츠 제목","채널","게시일","이벤트 유형","확인 상태","콘텐츠 URL"]],
-      body: rows,
-      styles: { font:"helvetica", fontSize:8, cellPadding:5, overflow:"linebreak" },
-      headStyles: { fillColor:[14,110,92], textColor:255, fontStyle:"bold" },
-      columnStyles: {
-        0:{cellWidth:65}, 1:{cellWidth:150}, 2:{cellWidth:90}, 3:{cellWidth:60},
-        4:{cellWidth:65}, 5:{cellWidth:45}, 6:{cellWidth:195}
-      },
-      theme:"grid"
-    });
+      var pageSize = 4;
+      var pages = [];
+      for(var i=0;i<chosen.length;i+=pageSize){ pages.push(chosen.slice(i,i+pageSize)); }
 
-    var fname = "경쟁사콘텐츠_선택비교표_" + today.replace(/-/g,"") + ".pdf";
-    var blob = doc.output("blob");
+      var container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-99999px";
+      container.style.top = "0";
+      document.body.appendChild(container);
 
-    if(window.claude && window.claude.use){
-      window.claude.use("downloads").then(function(downloads){
-        if(!downloads){ fallbackOpen(blob, fname); return; }
-        downloads.save({ filename: fname, data: blob }).catch(function(){
-          fallbackOpen(blob, fname);
-        });
-      }).catch(function(){ fallbackOpen(blob, fname); });
-    } else {
-      fallbackOpen(blob, fname);
+      var doc = new jsPDFCtor({ orientation:"landscape", unit:"pt", format:"a4" });
+
+      for(var p=0; p<pages.length; p++){
+        container.innerHTML = buildReportPageHTML(headerTitle, pages[p]);
+        var imgs = container.querySelectorAll("img");
+        await Promise.all(Array.from(imgs).map(function(im){
+          return im.complete ? Promise.resolve() : new Promise(function(res){ im.onload=res; im.onerror=res; });
+        }));
+        var canvas = await html2canvas(container, { scale:2, backgroundColor:"#ffffff", useCORS:true });
+        var imgData = canvas.toDataURL("image/jpeg", 0.92);
+        var pageW = doc.internal.pageSize.getWidth();
+        var pageH = doc.internal.pageSize.getHeight();
+        var ratio = Math.min((pageW-40)/canvas.width, (pageH-40)/canvas.height);
+        var w = canvas.width*ratio, h = canvas.height*ratio;
+        if(p>0) doc.addPage();
+        doc.addImage(imgData, "JPEG", (pageW-w)/2, 20, w, h);
+      }
+
+      document.body.removeChild(container);
+
+      var fname = reportCode + "_경쟁사 SNS 모니터링.pdf";
+      var blob = doc.output("blob");
+
+      if(window.claude && window.claude.use){
+        window.claude.use("downloads").then(function(downloads){
+          if(!downloads){ fallbackOpen(blob, fname); return; }
+          downloads.save({ filename: fname, data: blob }).catch(function(){
+            fallbackOpen(blob, fname);
+          });
+        }).catch(function(){ fallbackOpen(blob, fname); });
+      } else {
+        fallbackOpen(blob, fname);
+      }
+    } catch(e){
+      alert("PDF 생성 중 문제가 발생했습니다: " + e.message);
+    } finally {
+      pdfBtn.disabled = state.selected.size === 0;
+      pdfBtn.textContent = pdfBtnLabel;
     }
   });
 
