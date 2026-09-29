@@ -643,23 +643,24 @@
     });
   }
 
-  var PAGE_COLS = 3, PAGE_ROWS = 3; // 한 페이지에 최대 3개씩 3줄(9개)을 쌓아 세로로도 페이지를 채운다
+  var PAGE_COLS = 2, PAGE_ROWS = 4; // 한 페이지에 최대 2개씩 4줄(8개)을 쌓아, 세로형(모바일)에 어울리는 폭을 유지하면서 페이지를 채운다
 
-  function buildBlockTableHTML(items, thumbMap){
+  function buildBlockTableHTML(items, thumbMap, isLast){
     var groups = [];
     items.forEach(function(it){
       var last = groups[groups.length-1];
       if(last && last.brand===it.brand){ last.items.push(it); } else { groups.push({brand:it.brand, items:[it]}); }
     });
+    var td = 'style="padding:6px 14px;"';
     var html = '<table style="border-collapse:collapse;width:'+(items.length*colWidth+labelWidth)+'px;table-layout:fixed;">';
     html += '<colgroup><col style="width:'+labelWidth+'px;">'+items.map(function(){return '<col style="width:'+colWidth+'px;">';}).join('')+'</colgroup>';
 
-    function labelCell(label){ return '<td style="border:1px solid #ccc;padding:10px;font-weight:700;background:#f5f5f5;text-align:center;">'+label+'</td>'; }
+    function labelCell(label){ return '<td style="padding:6px 14px;font-size:10px;font-weight:700;color:#9a9a9a;letter-spacing:.04em;text-transform:uppercase;vertical-align:middle;">'+label+'</td>'; }
 
     html += '<tr>'+labelCell('경쟁사명');
     groups.forEach(function(g){
       var color = BRAND_COLOR[g.brand] || '#333';
-      html += '<td colspan="'+g.items.length+'" style="border:1px solid #ccc;padding:12px;background:'+color+';color:#fff;font-weight:800;text-align:center;font-size:16px;">'+g.brand+'</td>';
+      html += '<td colspan="'+g.items.length+'" style="padding:8px 14px 10px;border-bottom:2px solid '+color+';color:'+color+';font-weight:800;font-size:15px;">'+g.brand+'</td>';
     });
     html += '</tr>';
 
@@ -667,28 +668,28 @@
     items.forEach(function(it){
       var fitted = thumbMap[it.brand+"|"+it.title];
       var img = fitted
-        ? '<img src="'+fitted+'" style="display:block;width:100%;height:220px;">'
-        : '<div style="width:100%;height:220px;display:flex;align-items:center;justify-content:center;color:#999;background:#f0f0f0;">썸네일 없음</div>';
-      html += '<td style="border:1px solid #ccc;padding:8px;">'+img+'</td>';
+        ? '<img src="'+fitted+'" style="display:block;width:100%;height:220px;border-radius:4px;">'
+        : '<div style="width:100%;height:220px;display:flex;align-items:center;justify-content:center;color:#999;background:#f7f7f7;border-radius:4px;">썸네일 없음</div>';
+      html += '<td '+td+'><div style="padding-top:10px;">'+img+'</div></td>';
     });
     html += '</tr>';
 
     html += '<tr>'+labelCell('타이틀');
     items.forEach(function(it){
-      html += '<td style="border:1px solid #ccc;padding:10px;text-align:center;font-size:13px;line-height:1.4;word-break:keep-all;">'+it.title+'</td>';
+      html += '<td '+td+' style="padding:8px 14px;text-align:left;font-size:13.5px;font-weight:700;line-height:1.45;word-break:keep-all;color:#161616;">'+it.title+'</td>';
     });
     html += '</tr>';
 
     html += '<tr>'+labelCell('URL');
     items.forEach(function(it){
       var linkText = it.channel==="DA" ? "이벤트 페이지" : it.url;
-      html += '<td style="border:1px solid #ccc;padding:10px;text-align:center;font-size:11px;word-break:break-all;"><a href="'+it.url+'" style="color:#1a56db;text-decoration:underline;">'+linkText+'</a></td>';
+      html += '<td style="padding:4px 14px;text-align:left;font-size:11px;word-break:break-all;"><a href="'+it.url+'" style="color:#6b6b6b;text-decoration:none;border-bottom:1px solid #d8d8d8;">'+linkText+'</a></td>';
     });
     html += '</tr>';
 
     html += '<tr>'+labelCell('채널/유형');
     items.forEach(function(it){
-      html += '<td style="border:1px solid #ccc;padding:10px;text-align:center;font-size:12px;">'+(CHANNEL_LABEL[it.channel]||it.channel)+'</td>';
+      html += '<td style="padding:4px 14px 14px;text-align:left;font-size:11.5px;color:#6b6b6b;'+(isLast?'':'border-bottom:1px dotted #ddd;padding-bottom:16px;')+'">'+(CHANNEL_LABEL[it.channel]||it.channel)+'</td>';
     });
     html += '</tr>';
 
@@ -698,12 +699,13 @@
 
   function buildReportPageHTML(headerTitle, items, thumbMap){
     var pageWidthPx = PAGE_COLS*colWidth + labelWidth + 40;
-    var html = '<div style="font-family:\'Noto Sans KR\',sans-serif;width:'+pageWidthPx+'px;padding:20px;background:#fff;color:#111;">';
-    html += '<div style="font-size:20px;font-weight:800;margin-bottom:14px;">'+headerTitle+'</div>';
-    for(var i=0;i<items.length;i+=PAGE_COLS){
-      var rowItems = items.slice(i, i+PAGE_COLS);
-      html += '<div style="'+(i>0?'margin-top:16px;':'')+'">'+buildBlockTableHTML(rowItems, thumbMap)+'</div>';
-    }
+    var html = '<div style="font-family:\'Noto Sans KR\',sans-serif;width:'+pageWidthPx+'px;padding:28px 24px;background:#fff;color:#111;">';
+    html += '<div style="font-size:17px;font-weight:800;letter-spacing:-.01em;padding-bottom:14px;margin-bottom:6px;border-bottom:1px solid #111;">'+headerTitle+'</div>';
+    var rowBlocks = [];
+    for(var i=0;i<items.length;i+=PAGE_COLS){ rowBlocks.push(items.slice(i, i+PAGE_COLS)); }
+    rowBlocks.forEach(function(rowItems, idx){
+      html += buildBlockTableHTML(rowItems, thumbMap, idx===rowBlocks.length-1);
+    });
     html += '</div>';
     return html;
   }
