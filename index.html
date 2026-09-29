@@ -728,7 +728,7 @@
         if(data) thumbMap[it.brand+"|"+it.title] = data;
       }));
 
-      var pageSize = 2;
+      var pageSize = 3;
       var pages = [];
       for(var i=0;i<chosen.length;i+=pageSize){ pages.push(chosen.slice(i,i+pageSize)); }
 
@@ -754,8 +754,10 @@
         var canvas = await html2canvas(container, { scale:2, backgroundColor:"#ffffff", useCORS:true });
         var imgData = canvas.toDataURL("image/jpeg", 0.92);
         var w = canvas.width*masterRatio, h = canvas.height*masterRatio;
+        var x = Math.max(20, (pageW-w)/2);
+        var y = Math.max(20, (pageH-h)/2);
         if(p>0) doc.addPage();
-        doc.addImage(imgData, "JPEG", 20, 20, w, h);
+        doc.addImage(imgData, "JPEG", x, y, w, h);
       }
 
       document.body.removeChild(container);
