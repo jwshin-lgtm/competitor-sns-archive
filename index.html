@@ -82,6 +82,23 @@
     overflow-wrap:break-word;
   }
 
+  .status-banner{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:var(--warn-bg);
+    color:var(--warn-ink);
+    border:1px solid var(--warn-ink);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:20px;
+    font-size:13px;
+    line-height:1.6;
+  }
+  .status-banner .icon{font-size:16px;line-height:1.6;}
+  .status-banner b{font-weight:700;}
+  .status-banner .meta{color:var(--warn-ink);opacity:.75;font-size:12px;margin-top:2px;}
+
   .toolbar{
     display:flex;
     flex-wrap:wrap;
@@ -237,6 +254,14 @@
     <p>7개 증권사가 인스타그램, 유튜브, 메타 광고에 올린 이벤트를 여기서 한눈에 비교하세요.<br>카드를 체크하면 아래 버튼으로 선택한 콘텐츠만 표로 담아 PDF로 받을 수 있어요.</p>
   </header>
 
+  <div id="status-banner" class="status-banner" style="display:none;">
+    <span class="icon">⚠️</span>
+    <div>
+      <div><b>Instagram 로그인이 만료되어 이번 주 인스타그램 콘텐츠는 확인하지 못했어요.</b> 재로그인이 필요해요.</div>
+      <div class="meta" id="status-banner-meta"></div>
+    </div>
+  </div>
+
   <div class="toolbar">
     <div class="group">
       <label class="field-label" for="f-brand">경쟁사</label>
@@ -278,6 +303,11 @@
 
 <script>
 (function(){
+  // ---- System status: 매주 자동 수집 작업이 마지막으로 확인한 상태 ----
+  var SYSTEM_STATUS = {
+    instagram: { ok:true, checkedAt:"2026-09-29", note:"" }
+  };
+
   // ---- Source data (mirrors 경쟁사SNS콘텐츠_수집표.xlsx > 수집표 시트) ----
   var ITEMS = [
     {
@@ -823,6 +853,20 @@
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 30000);
   }
+
+  function renderStatusBanner(){
+    var banner = document.getElementById("status-banner");
+    var meta = document.getElementById("status-banner-meta");
+    if(!banner) return;
+    var ig = SYSTEM_STATUS.instagram;
+    if(ig && ig.ok === false){
+      banner.style.display = "flex";
+      meta.textContent = "마지막 확인: " + ig.checkedAt + (ig.note ? " · " + ig.note : "");
+    } else {
+      banner.style.display = "none";
+    }
+  }
+  renderStatusBanner();
 
   render();
   updateBottombar();
