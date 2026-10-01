@@ -315,7 +315,7 @@
     <span class="sel-info"><b id="sel-count">0</b>개 선택됨</span>
     <div class="spacer"></div>
     <button class="btn ghost" id="clear-btn">선택 초기화</button>
-    <button class="btn ghost" id="slack-btn" disabled>슬랙 메시지 만들기</button>
+    <button class="btn ghost" id="slack-btn" disabled>메시지 만들기</button>
     <button class="btn primary" id="pdf-btn" disabled>선택 콘텐츠 PDF로 다운로드</button>
   </div>
 </div>
@@ -715,7 +715,7 @@
     var btn = document.getElementById("slack-copy-btn");
     function showCopied(){
       var orig = btn.textContent;
-      btn.textContent = "복사됨!";
+      btn.textContent = "복사 완료";
       setTimeout(function(){ btn.textContent = orig; }, 1500);
     }
     function fallbackCopy(){
