@@ -234,6 +234,24 @@
   .btn.primary{background:var(--accent);color:#fff;}
   .btn.primary:disabled{background:var(--border);color:var(--ink-soft);cursor:not-allowed;}
   .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--border);}
+  .btn.ghost:disabled{opacity:.5;cursor:not-allowed;}
+
+  .slack-modal{
+    position:fixed;inset:0;background:rgba(15,18,23,.5);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;z-index:50;
+  }
+  .slack-modal-inner{
+    background:var(--surface);border-radius:14px;box-shadow:var(--shadow);
+    width:100%;max-width:560px;padding:18px;display:flex;flex-direction:column;gap:12px;
+  }
+  .slack-modal-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;}
+  #slack-text{
+    width:100%;min-height:260px;resize:vertical;
+    border:1px solid var(--border);border-radius:8px;padding:12px;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.6;
+    background:var(--bg);color:var(--ink);
+  }
 
   footer.note{
     max-width:1080px;margin:22px auto 0;
@@ -297,7 +315,19 @@
     <span class="sel-info"><b id="sel-count">0</b>개 선택됨</span>
     <div class="spacer"></div>
     <button class="btn ghost" id="clear-btn">선택 초기화</button>
+    <button class="btn ghost" id="slack-btn" disabled>슬랙 메시지 만들기</button>
     <button class="btn primary" id="pdf-btn" disabled>선택 콘텐츠 PDF로 다운로드</button>
+  </div>
+</div>
+
+<div class="slack-modal" id="slack-modal" style="display:none;">
+  <div class="slack-modal-inner">
+    <div class="slack-modal-head">
+      <span>슬랙 메시지</span>
+      <button class="btn ghost" id="slack-close-btn">닫기</button>
+    </div>
+    <textarea id="slack-text" readonly spellcheck="false"></textarea>
+    <button class="btn primary" id="slack-copy-btn">메시지 복사</button>
   </div>
 </div>
 
@@ -632,6 +662,7 @@
   function updateBottombar(){
     document.getElementById("sel-count").textContent = state.selected.size;
     document.getElementById("pdf-btn").disabled = state.selected.size === 0;
+    document.getElementById("slack-btn").disabled = state.selected.size === 0;
   }
 
   brandSel.addEventListener("change", function(){ state.brand=brandSel.value; render(); });
@@ -643,6 +674,59 @@
     state.selected.clear();
     render();
     updateBottombar();
+  });
+
+  function channelSimpleForSlack(ch){
+    if(ch.indexOf("인스타그램")===0) return "인스타그램";
+    if(ch.indexOf("유튜브")===0) return "유튜브";
+    if(ch==="DA") return "메타광고";
+    return ch;
+  }
+  function cleanNoteForSlack(note){
+    var s = String(note||"");
+    var idx = s.indexOf(" · ");
+    return idx===-1 ? s : s.slice(idx+3).trim();
+  }
+  function slackDate(dateStr){
+    var m = String(dateStr||"").match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return dateStr;
+    return m[1].slice(2)+"."+m[2]+"."+m[3];
+  }
+  function buildSlackMessage(items){
+    var today = new Date();
+    var header = "3. 경쟁사 모니터링입니다. (" + slackDate(today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate())) + ")";
+    var blocks = items.map(function(it){
+      return "["+it.brand+"/"+channelSimpleForSlack(it.channel)+"] ["+it.title+"] \n- "+cleanNoteForSlack(it.note)+" "+it.url+" ("+slackDate(it.date)+")";
+    });
+    return header + "\n" + blocks.join("\n\n");
+  }
+
+  document.getElementById("slack-btn").addEventListener("click", function(){
+    var chosen = ITEMS.filter(function(i){ return state.selected.has(i.brand+"|"+i.title); });
+    if(!chosen.length) return;
+    document.getElementById("slack-text").value = buildSlackMessage(chosen);
+    document.getElementById("slack-modal").style.display = "flex";
+  });
+  document.getElementById("slack-close-btn").addEventListener("click", function(){
+    document.getElementById("slack-modal").style.display = "none";
+  });
+  document.getElementById("slack-copy-btn").addEventListener("click", function(){
+    var ta = document.getElementById("slack-text");
+    var btn = document.getElementById("slack-copy-btn");
+    function showCopied(){
+      var orig = btn.textContent;
+      btn.textContent = "복사됨!";
+      setTimeout(function(){ btn.textContent = orig; }, 1500);
+    }
+    function fallbackCopy(){
+      ta.focus(); ta.select();
+      try{ document.execCommand("copy"); showCopied(); }catch(e){ alert("복사에 실패했어요. 직접 선택해서 복사해주세요."); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(showCopied).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
   });
 
   var colWidth = 380, labelWidth = 120;
