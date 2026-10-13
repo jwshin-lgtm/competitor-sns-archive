@@ -1,0 +1,1054 @@
+<title>경쟁사 콘텐츠 아카이브</title>
+<style>
+  :root{
+    --ink:#15181D;
+    --ink-soft:#4B5563;
+    --bg:#F5F6F8;
+    --surface:#FFFFFF;
+    --border:#E3E6EB;
+    --accent:#0E6E5C;
+    --accent-soft:#E4F3EF;
+    --accent-ink:#08483C;
+    --warn-bg:#FFF4E5;
+    --warn-ink:#8A5300;
+    --ok-bg:#E4F3EF;
+    --ok-ink:#08483C;
+    --shadow: 0 1px 2px rgba(20,24,30,.04), 0 8px 24px rgba(20,24,30,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#EDEFF2;
+      --ink-soft:#A6ADB8;
+      --bg:#14171C;
+      --surface:#1B1F26;
+      --border:#2A2F38;
+      --accent:#3FBF9F;
+      --accent-soft:#183B33;
+      --accent-ink:#8FE6CC;
+      --warn-bg:#3A2E13;
+      --warn-ink:#E8B860;
+      --ok-bg:#183B33;
+      --ok-ink:#8FE6CC;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#EDEFF2;
+    --ink-soft:#A6ADB8;
+    --bg:#14171C;
+    --surface:#1B1F26;
+    --border:#2A2F38;
+    --accent:#3FBF9F;
+    --accent-soft:#183B33;
+    --accent-ink:#8FE6CC;
+    --warn-bg:#3A2E13;
+    --warn-ink:#E8B860;
+    --ok-bg:#183B33;
+    --ok-ink:#8FE6CC;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans KR","Pretendard",-apple-system,sans-serif;
+    padding:0 16px;
+    padding-block:24px 100px;
+    word-break:keep-all;
+    overflow-wrap:break-word;
+  }
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace;}
+
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  header.page{margin-bottom:24px;}
+  header.page .eyebrow{
+    font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--accent-ink);font-weight:700;margin-bottom:8px;
+  }
+  header.page h1{
+    font-size:clamp(24px,4vw,32px);
+    margin:0 0 8px;
+    letter-spacing:-0.02em;
+    text-wrap:balance;
+  }
+  header.page p{
+    color:var(--ink-soft);
+    margin:0;
+    line-height:1.6;
+    font-size:14px;
+    word-break:keep-all;
+    overflow-wrap:break-word;
+  }
+
+  .status-banner{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    background:var(--warn-bg);
+    color:var(--warn-ink);
+    border:1px solid var(--warn-ink);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:20px;
+    font-size:13px;
+    line-height:1.6;
+  }
+  .status-banner .icon{font-size:16px;line-height:1.6;}
+  .status-banner b{font-weight:700;}
+  .status-banner .meta{color:var(--warn-ink);opacity:.75;font-size:12px;margin-top:2px;}
+
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:20px;
+    box-shadow:var(--shadow);
+  }
+  .toolbar .group{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .toolbar label.field-label{
+    font-size:11px;color:var(--ink-soft);font-weight:700;
+    text-transform:uppercase;letter-spacing:.05em;margin-right:2px;
+  }
+  select{
+    border:1px solid var(--border);
+    background:var(--bg);
+    color:var(--ink);
+    border-radius:8px;
+    padding:7px 10px;
+    font-size:13px;
+    font-family:inherit;
+  }
+  select:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+  .spacer{flex:1;}
+  .count-pill{
+    font-size:12px;color:var(--ink-soft);
+    background:var(--bg);border:1px solid var(--border);
+    padding:6px 10px;border-radius:999px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:14px;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    transition:border-color .15s ease;
+  }
+  .card:has(.chk:checked){border-color:var(--accent);}
+  .thumb{
+    height:220px;
+    flex-shrink:0;
+    background:
+      linear-gradient(135deg, var(--accent-soft), transparent 70%),
+      repeating-linear-gradient(45deg, var(--border) 0 1px, transparent 1px 14px);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);
+    font-size:12px;
+    position:relative;
+  }
+  .thumb .ch-badge{
+    position:absolute;top:8px;left:8px;
+    font-size:10px;font-weight:700;letter-spacing:.03em;
+    padding:4px 8px;border-radius:999px;
+    background:var(--surface);border:1px solid var(--border);color:var(--ink-soft);
+  }
+  .thumb .new-badge{
+    position:absolute;top:8px;right:36px;
+    font-size:10px;font-weight:900;letter-spacing:.03em;
+    padding:4px 8px;border-radius:999px;
+    background:var(--accent);color:#fff;
+  }
+  .thumb .edit-thumb-btn{
+    position:absolute;bottom:8px;right:8px;
+    font-size:10px;font-weight:700;
+    padding:4px 8px;border-radius:6px;
+    background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;
+  }
+  .thumb .edit-thumb-btn:hover{ background:rgba(0,0,0,.8); }
+  .chk-wrap{
+    position:absolute;top:8px;right:8px;
+    width:22px;height:22px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .chk{
+    width:18px;height:18px;cursor:pointer;accent-color:var(--accent);
+  }
+  .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1;}
+  .brand{font-size:12px;font-weight:700;color:var(--accent-ink);}
+  .title{font-size:14px;font-weight:600;line-height:1.4;text-wrap:balance;}
+  .meta{font-size:11.5px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .meta .dot{opacity:.5;}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+  .tag{
+    font-size:10.5px;padding:3px 8px;border-radius:999px;
+    background:var(--bg);border:1px solid var(--border);color:var(--ink-soft);
+  }
+  .tag.status-실측{background:var(--ok-bg);color:var(--ok-ink);border-color:transparent;}
+  .tag.status-예시{background:var(--warn-bg);color:var(--warn-ink);border-color:transparent;}
+  .link{
+    margin-top:auto;
+    font-size:12px;color:var(--accent-ink);
+    text-decoration:none;
+    display:inline-flex;align-items:center;gap:4px;
+  }
+  .link:hover{text-decoration:underline;}
+
+  .bottombar{
+    position:fixed;left:0;right:0;bottom:0;
+    padding:14px 16px;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));
+    background:var(--surface);
+    border-top:1px solid var(--border);
+    display:flex;justify-content:center;
+    box-shadow:0 -8px 24px rgba(20,24,30,.08);
+  }
+  .bottombar-inner{
+    max-width:1080px;width:100%;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .bottombar .sel-info{font-size:13px;color:var(--ink-soft);}
+  .bottombar .sel-info b{color:var(--ink);}
+  .btn{
+    border:none;border-radius:9px;padding:10px 16px;
+    font-size:13px;font-weight:700;cursor:pointer;
+    font-family:inherit;
+  }
+  .btn.primary{background:var(--accent);color:#fff;}
+  .btn.primary:disabled{background:var(--border);color:var(--ink-soft);cursor:not-allowed;}
+  .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--border);}
+  .btn.ghost:disabled{opacity:.5;cursor:not-allowed;}
+
+  .slack-modal{
+    position:fixed;inset:0;background:rgba(15,18,23,.5);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;z-index:50;
+  }
+  .slack-modal-inner{
+    background:var(--surface);border-radius:14px;box-shadow:var(--shadow);
+    width:100%;max-width:560px;padding:18px;display:flex;flex-direction:column;gap:12px;
+  }
+  .slack-modal-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;}
+  #slack-text{
+    width:100%;min-height:260px;resize:vertical;
+    border:1px solid var(--border);border-radius:8px;padding:12px;
+    font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.6;
+    background:var(--bg);color:var(--ink);
+  }
+
+  footer.note{
+    max-width:1080px;margin:22px auto 0;
+    font-size:11.5px;color:var(--ink-soft);
+    border-top:1px dashed var(--border);
+    padding-top:14px;line-height:1.6;
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<div class="wrap">
+  <header class="page">
+    <div class="eyebrow">증권업 경쟁사 SNS·광고 모니터링</div>
+    <h1>경쟁사 콘텐츠 아카이브</h1>
+    <p>7개 증권사가 인스타그램, 유튜브, 메타 광고에 올린 이벤트를 여기서 한눈에 비교하세요.<br>카드를 체크하면 아래 버튼으로 선택한 콘텐츠만 표로 담아 PDF로 받을 수 있어요.</p>
+  </header>
+
+  <div id="status-banner" class="status-banner" style="display:none;">
+    <span class="icon">⚠️</span>
+    <div>
+      <div><b>Instagram 로그인이 만료되어 이번 주 인스타그램 콘텐츠는 확인하지 못했어요.</b> 재로그인이 필요해요.</div>
+      <div class="meta" id="status-banner-meta"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="group">
+      <label class="field-label" for="f-brand">경쟁사</label>
+      <select id="f-brand"><option value="">전체</option></select>
+    </div>
+    <div class="group">
+      <label class="field-label" for="f-channel">채널</label>
+      <select id="f-channel"><option value="">전체</option></select>
+    </div>
+    <div class="group">
+      <label class="field-label" for="f-status" title="확인완료: 담당자가 원문을 직접 확인했어요 / 예시: 화면 구성을 보여주는 샘플이에요 / 확인 필요: 원본이 사라져 다시 확인해야 해요">확인 상태</label>
+      <select id="f-status"><option value="">전체</option></select>
+    </div>
+    <div class="group">
+      <label class="field-label" for="f-period" title="수요일부터 다음 화요일까지를 한 주로 묶어서 볼 수 있어요">게시 기간</label>
+      <select id="f-period"><option value="">전체</option></select>
+    </div>
+    <div class="spacer"></div>
+    <span class="count-pill" id="result-count">0건 표시 중</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer class="note">
+    <p style="margin:0 0 8px;">이벤트 유형은 네 가지예요. <b>상품가입유도형</b>(특정 금융상품 가입·계좌 개설을 유도하는 이벤트), <b>단순참여형</b>(상품과 무관하게 댓글·퀴즈·추첨 등 참여 자체가 목적인 이벤트), <b>브랜드시즌협업형</b>(캐릭터 콜라보, 명절 등 시즌 캠페인처럼 브랜드 이미지가 목적인 이벤트), <b>기타</b>(위 세 가지로 분류하기 어려운 이벤트)예요.</p>
+    <p style="margin:0 0 8px;">카드에 "확인 필요" 표시가 없으면 담당자가 원문을 직접 확인한 콘텐츠예요. "예시"는 화면 구성을 보여주려고 만든 샘플이라 실제 데이터가 아니에요. 콘텐츠를 활용하기 전에 원문 링크를 다시 한번 확인하세요.</p>
+    <p style="margin:0;">썸네일 위 "이미지 편집" 버튼을 누르면 원하는 이미지로 바꿀 수 있어요. 바꾼 이미지는 지금 이 브라우저에서 바로 보이고, 같은 이름의 파일이 자동으로 다운로드돼요. 다만 이 변경은 이 브라우저에만 저장되어 다른 사람에게는 안 보이니, 모두에게 반영하려면 방금 다운로드된 파일을 저(Claude)에게 전달해주세요. 사이트에 반영해드릴게요.</p>
+  </footer>
+</div>
+
+<div class="bottombar">
+  <div class="bottombar-inner">
+    <span class="sel-info"><b id="sel-count">0</b>개 선택됨</span>
+    <div class="spacer"></div>
+    <button class="btn ghost" id="clear-btn">선택 초기화</button>
+    <button class="btn ghost" id="slack-btn" disabled>메시지 만들기</button>
+    <button class="btn primary" id="pdf-btn" disabled>선택 콘텐츠 PDF로 다운로드</button>
+  </div>
+</div>
+
+<div class="slack-modal" id="slack-modal" style="display:none;">
+  <div class="slack-modal-inner">
+    <div class="slack-modal-head">
+      <span>슬랙 메시지</span>
+      <button class="btn ghost" id="slack-close-btn">닫기</button>
+    </div>
+    <textarea id="slack-text" readonly spellcheck="false"></textarea>
+    <button class="btn primary" id="slack-copy-btn">메시지 복사</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- System status: 매주 자동 수집 작업이 마지막으로 확인한 상태 ----
+  var SYSTEM_STATUS = {
+    instagram: { ok:false, checkedAt:"2026-10-13", note:"재로그인 필요" }
+  };
+
+  // ---- Source data (mirrors 경쟁사SNS콘텐츠_수집표.xlsx > 수집표 시트) ----
+  var ITEMS = [
+    {
+      brand:"미래에셋증권", channel:"인스타그램/캐러셀이미지",
+      title:"앱 리브랜딩 이름 맞히기 댓글 이벤트",
+      url:"https://www.instagram.com/p/DdVL6XBnwem/",
+      thumb:"/_blob/a7f7ec43e9ad3de9450669f7af216ef2",
+      date:"2026-09-15", topic:"단순참여형", status:"실측",
+      note:"@miraeasset.securities_official · 앱 새 이름 맞히기+댓글 참여, 추첨 경품"
+    },
+    {
+      brand:"미래에셋증권", channel:"유튜브/영상",
+      title:"'연애처럼 주식투자' 2화 댓글 이벤트",
+      url:"https://youtu.be/q95P9szmnx0",
+      thumb:"/_blob/0bdbbe0560a48fa4cc48d2ab20610139",
+      date:"2026-09-09", topic:"단순참여형", status:"실측",
+      note:"미래에셋 스마트머니 채널 · 영상 시청+댓글 참여, 치킨/커피 쿠폰 추첨"
+    },
+    {
+      brand:"삼성증권", channel:"인스타그램/캐러셀이미지",
+      title:"연금 가입했닭 댓글 이벤트",
+      url:"https://www.instagram.com/p/DdVHBoEEXT2/",
+      thumb:"/_blob/2efb709426930fcfd0557ce4c19db48d",
+      date:"2026-09-17", topic:"상품가입유도형", status:"실측",
+      note:"@samsung.securities · 유튜브 영상 시청+댓글, 매일 100명 치킨쿠폰"
+    },
+    {
+      brand:"삼성증권", channel:"유튜브/영상",
+      title:"연금 가입했닭 이벤트 안내 영상",
+      url:"https://www.youtube.com/watch?v=HmaTu-KAL3s",
+      thumb:"/_blob/fb2adb19d45d1a360f9aff4161241a82",
+      date:"2026-09-16", topic:"상품가입유도형", status:"실측",
+      note:"삼성증권 공식 유튜브 · 댓글 이벤트 대상 영상, 조회수 16만+"
+    },
+    {
+      brand:"삼성증권", channel:"DA",
+      title:"연금 가입했닭 이벤트 광고",
+      url:"https://www.facebook.com/ads/library/?id=1707334933681182",
+      thumb:"/_blob/503f382c27d7404d89f1b57379849d14",
+      date:"2026-09-15", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 유튜브 이벤트를 홍보하는 DA 소재"
+    },
+    {
+      brand:"키움증권", channel:"인스타그램/캐러셀이미지",
+      title:"빈칸 채우기 퀴즈 이벤트",
+      url:"https://www.instagram.com/p/DdQVPuKvHxb/",
+      thumb:"/_blob/b28de6b8e9c1231e4e10211c8eeaaa1a",
+      date:"2026-09-14", topic:"단순참여형", status:"실측",
+      note:"@kiwoom.official · 빈칸 채우기 댓글 참여, 추첨 300명 기프티콘"
+    },
+    {
+      brand:"키움증권", channel:"DA",
+      title:"잔망루피 콜라보 한정판 굿즈 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=1337493478459579",
+      thumb:"/_blob/5a679bd54317a429c5862762debf0a85",
+      date:"2026-09-20", topic:"브랜드시즌협업형", status:"실측",
+      note:"Meta 광고 라이브러리 · 신규고객 선착순 5천명 멘탈키트 증정"
+    },
+    {
+      brand:"NH투자증권", channel:"DA",
+      title:"나무증권 수수료 0원 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=1121436910408208",
+      thumb:"/_blob/7ccc7a10f9e4f1fdd1f1e60be0e70fdd",
+      date:"2026-09-13", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 신규/휴면고객 24개월 국내주식 수수료 완전무료(~26.12.31)"
+    },
+    {
+      brand:"키움증권", channel:"DA",
+      title:"2026 영웅결정전 실전 투자대회",
+      url:"https://www.facebook.com/ads/library/?id=1111450638108565",
+      thumb:"/_blob/553739cf55ed69927830c6afa019d9a8",
+      date:"2026-09-23", topic:"단순참여형", status:"실측",
+      note:"Meta 광고 라이브러리 · 총상금 4억(개인 최대 1.5억), 사전 알림 신청 기간 26.09.17~10.14"
+    },
+    {
+      brand:"신한투자증권", channel:"DA",
+      title:"계좌개설 테슬라 모델Y 추첨 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=1053806620800721",
+      thumb:"",
+      date:"2026-09-18", topic:"상품가입유도형", status:"확인필요",
+      note:"Meta 광고 라이브러리 · 주 100만원 거래 시 14주간 매주 1명 테슬라 모델Y 추첨 (해당 광고가 Meta 광고 라이브러리에서 만료·삭제되어 원본 썸네일 재확보 불가)"
+    },
+    {
+      brand:"신한투자증권", channel:"DA",
+      title:"추석 댓글 인터뷰 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=2153577455222050",
+      thumb:"/_blob/e7f7c1b47a133aadce04d32f8a4da557",
+      date:"2026-09-22", topic:"브랜드시즌협업형", status:"실측",
+      note:"Meta 광고 라이브러리 · 추석 연휴 계획 댓글 공유 이벤트(영상 콘텐츠)"
+    },
+    {
+      brand:"한국투자증권", channel:"DA",
+      title:"원화 RP 이자굴리기 신청 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=1109633408189811",
+      thumb:"images/koreainvest_rp.jpg",
+      date:"2026-09-20", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 원화 RP 이자굴리기 신청+매일 확인 시 최대 3만원(26.09.21~10.06)"
+    },
+    {
+      brand:"한국투자증권", channel:"DA",
+      title:"자녀 계좌 개설 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=950090454802214",
+      thumb:"images/koreainvest_child.jpg",
+      date:"2026-09-21", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 자녀 계좌 개설 시 국내주식 2주+투자지원금 최대 7만원"
+    },
+    {
+      brand:"삼성증권", channel:"유튜브/영상",
+      title:"압도적 혜택이 온다 이벤트 안내 영상",
+      url:"https://www.youtube.com/watch?v=_5mBI0pstNs",
+      thumb:"/_blob/35ef6181bb8c4ce63b7f30eaf2a88252",
+      date:"2026-09-28", topic:"상품가입유도형", status:"실측",
+      note:"삼성증권 공식 유튜브 · 신규·휴면고객 국내주식 투자지원금 최대 10만원, 자녀 아동수당 계좌 이벤트, ISA/IRP 세액공제 안내(~10.30)"
+    },
+    {
+      brand:"삼성증권", channel:"DA",
+      title:"압도적 혜택이 온다 이벤트 광고",
+      url:"https://www.facebook.com/ads/library/?id=4072287366414537",
+      thumb:"/_blob/c1af2dc90233ce7b61eadb8a21b9f441",
+      date:"2026-09-27", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 신규·휴면고객 국내주식 투자지원금 최대 10만원, 자녀 아동수당 계좌 이벤트, ISA/IRP 세액공제 안내(~10.30)"
+    },
+    {
+      brand:"삼성증권", channel:"인스타그램/캐러셀이미지",
+      title:"연금 투자의 정석 라이브 O/X 퀴즈 이벤트",
+      url:"https://www.instagram.com/p/Dd3Vl-BxT1a/",
+      thumb:"images/8a4f2c96e21365cc351812b3ba3a68e2.jpg",
+      date:"2026-10-01", topic:"단순참여형", status:"실측",
+      note:"@samsung.securities · 유튜브 라이브[연금 투자의 정석] 시청+O/X퀴즈 참여, 추첨 1,000명 아메리카노 쿠폰"
+    },
+    {
+      brand:"삼성증권", channel:"인스타그램/영상",
+      title:"고객 감사제 최대 10만원 혜택 이벤트",
+      url:"https://www.instagram.com/p/Dd8DiY_vyPI/",
+      thumb:"images/4fbbad2709f47d685d3afaa3c02816b2.jpg",
+      date:"2026-10-01", topic:"상품가입유도형", status:"실측",
+      note:"@samsung.securities · 비대면 계좌 개설 신규·휴면고객 대상 최대 10만원 혜택(~10.30)"
+    },
+    {
+      brand:"삼성증권", channel:"인스타그램/캐러셀이미지",
+      title:"퇴직연금 IRP 웰컴 혜택 이벤트",
+      url:"https://www.instagram.com/p/Dd711bQyPOm/",
+      thumb:"images/9b97d984f92c80159f94d0996037bf60.jpg",
+      date:"2026-10-01", topic:"상품가입유도형", status:"실측",
+      note:"@samsung.securities · IRP 신규 개설고객 대상 최대 3만원 혜택(~10.31)"
+    },
+    {
+      brand:"삼성증권", channel:"인스타그램/캐러셀이미지",
+      title:"발행어음 가입 이벤트",
+      url:"https://www.instagram.com/p/Dd5iqMqymOO/",
+      thumb:"images/dac68bebfef0146b7caddda34231e150.jpg",
+      date:"2026-10-01", topic:"상품가입유도형", status:"실측",
+      note:"@samsung.securities · 발행어음 100만원 이상 가입 시 전원 커피쿠폰, 충전고 구간별 리워드 추첨"
+    },
+    {
+      brand:"삼성증권", channel:"DA",
+      title:"압도적 혜택이 온다 이벤트 광고(신규 소재)",
+      url:"https://www.facebook.com/ads/library/?id=1590351259510818",
+      thumb:"images/312a81ab03aec53b9f51b9b575c4e944.jpg",
+      date:"2026-10-04", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 압도적 혜택이 온다 캠페인 신규 영상 소재(~10.30)"
+    },
+    {
+      brand:"키움증권", channel:"DA",
+      title:"네이버페이 받을 친구 구함 친구초대 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=1590969556059993",
+      thumb:"images/b76f2de8c6ccda1ec7fbd9d97f1803fe.jpg",
+      date:"2026-10-01", topic:"단순참여형", status:"실측",
+      note:"Meta 광고 라이브러리 · 신청만 해도 네이버페이 1,000원, 친구 초대할수록 최대 10만원"
+    },
+    {
+      brand:"키움증권", channel:"DA",
+      title:"휴면고객 수수료 캐시백 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=2338846889984660",
+      thumb:"images/e9b5f6186055c7c6f84265012cca6f11.jpg",
+      date:"2026-10-02", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 휴면고객 1주 거래 시 2만 1천원, 최대 6개월 수수료 혜택"
+    },
+    {
+      brand:"한국투자증권", channel:"DA",
+      title:"국내주식 2주+최대 7만원 혜택 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=1755194755751333",
+      thumb:"images/fa9d0605395751c5045f048c7d134219.jpg",
+      date:"2026-09-30", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 주식 첫 시작 고객 대상 국내주식 2주+최대 7만원 혜택(25.09.01~26.10.31)"
+    },
+    {
+      brand:"NH투자증권", channel:"유튜브/영상",
+      title:"나무증권 X 설윤 수수료 0원 콜라보 영상",
+      url:"https://www.youtube.com/watch?v=FOgjPCWFKH8",
+      thumb:"images/9640b857b2324389b7e083482912d019.jpg",
+      date:"2026-09-30", topic:"브랜드시즌협업형", status:"실측",
+      note:"투자로그인 by NH투자증권 · 모델 설윤 콜라보, 신규·휴면고객 국내주식 수수료 24개월 0원 이벤트 홍보(~12.31)"
+    },
+    {
+      brand:"신한투자증권", channel:"DA",
+      title:"금현물 거래 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=2924492001225844",
+      thumb:"images/c5954211dea12e496748225c083fa3f1.jpg",
+      date:"2026-10-05", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 금현물 첫 매수 고객 투자쿠폰 5,000원(선착순 500명), 누적 매수구간별 최대 금 한돈/현금 리워드 추첨(26.08.07~10.31)"
+    },
+    {
+      brand:"신한투자증권", channel:"DA",
+      title:"국내주식 거래 매주 1억원 당첨 이벤트",
+      url:"https://www.facebook.com/ads/library/?id=1627051479111669",
+      thumb:"images/276efa304f8af6cfcce32de57d358ec0.jpg",
+      date:"2026-10-07", topic:"상품가입유도형", status:"실측",
+      note:"Meta 광고 라이브러리 · 주간 국내주식 거래 1억원 이상 시 8주간 총 8억원 규모 당첨 기회, 인스타그램 팔로우+친구태그 시 투썸플레이스 아메리카노 추첨(10명, 10.07~10.13)"
+    },
+    {
+      brand:"한국투자증권", channel:"유튜브/영상",
+      title:"연 5% 특판 발행어음 한도 소진 임박 안내",
+      url:"https://www.youtube.com/watch?v=Jp3JNs8jwRs",
+      thumb:"images/2b4dded038672b1cb0c4af0ded624e6f.jpg",
+      date:"2026-10-08", topic:"상품가입유도형", status:"실측",
+      note:"한국투자증권 공식 유튜브 · 연 5% 특판 발행어음 한도 소진 시 조기 마감 안내 숏폼"
+    }
+  ];
+
+  var state = { brand:"", channel:"", status:"", period:"", selected:new Set() };
+
+  // ---- 주차(수요일~화요일) 계산: 게시일 문자열에서 날짜를 추출해 그 주의 수~화 구간을 구한다 ----
+  function pad2(n){ return (n<10?"0":"")+n; }
+  function fmtMD(d){ return pad2(d.getMonth()+1)+"/"+pad2(d.getDate()); }
+  function extractDate(str){
+    var m = String(str||"").match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return null;
+    return new Date(parseInt(m[1],10), parseInt(m[2],10)-1, parseInt(m[3],10));
+  }
+  function weekCycleOf(dateStr){
+    var d = extractDate(dateStr);
+    if(!d) return null;
+    var iso = d.getDay()===0 ? 7 : d.getDay(); // 월=1 ... 일=7
+    var diffFromWed = (iso - 3 + 7) % 7; // 그 주의 수요일로부터 며칠 지났는지
+    var start = new Date(d); start.setDate(d.getDate()-diffFromWed);
+    var end = new Date(start); end.setDate(start.getDate()+6);
+    return { start:start, end:end, label: fmtMD(start)+"~"+fmtMD(end) };
+  }
+  var CURRENT_CYCLE = weekCycleOf(new Date().toISOString().slice(0,10));
+
+  ITEMS.forEach(function(item){
+    var c = weekCycleOf(item.date);
+    item._cycle = c ? c.label : "확인필요";
+    item._cycleStart = c ? c.start.getTime() : -1;
+  });
+
+  function uniq(arr){ return Array.from(new Set(arr)); }
+  function fillSelect(sel, values, labelFn){
+    values.forEach(function(v){
+      var o = document.createElement("option");
+      o.value = v; o.textContent = labelFn ? labelFn(v) : v;
+      sel.appendChild(o);
+    });
+  }
+
+  function channelShort(ch){
+    if(ch==="인스타그램/캐러셀이미지") return "인스타그램 · 이미지";
+    if(ch==="인스타그램/영상") return "인스타그램 · 영상";
+    if(ch==="유튜브/영상") return "유튜브";
+    return "메타 광고";
+  }
+  var STATUS_LABEL = { "실측":"확인완료", "예시":"예시", "확인필요":"확인 필요" };
+  var STATUS_DESC = {
+    "실측":"담당자가 원문을 직접 확인했어요",
+    "예시":"화면 구성을 보여주는 샘플이에요",
+    "확인필요":"원본이 사라져 다시 확인해야 해요"
+  };
+  function statusLabel(s){ return STATUS_LABEL[s] || s; }
+  var TOPIC_DESC = {
+    "상품가입유도형":"특정 금융상품 가입·계좌 개설을 유도하는 이벤트예요",
+    "단순참여형":"상품과 무관하게 댓글·퀴즈·추첨 등 참여 자체가 목적인 이벤트예요",
+    "브랜드시즌협업형":"캐릭터 콜라보, 명절 등 시즌 캠페인처럼 브랜드 이미지가 목적인 이벤트예요",
+    "기타":"위 세 가지로 분류하기 어려운 이벤트예요"
+  };
+
+  var brandSel = document.getElementById("f-brand");
+  var channelSel = document.getElementById("f-channel");
+  var statusSel = document.getElementById("f-status");
+  var periodSel = document.getElementById("f-period");
+  fillSelect(brandSel, uniq(ITEMS.map(function(i){return i.brand;})));
+  fillSelect(channelSel, uniq(ITEMS.map(function(i){return i.channel;})), channelShort);
+  fillSelect(statusSel, uniq(ITEMS.map(function(i){return i.status;})), statusLabel);
+
+  var cyclesByRecency = uniq(ITEMS.map(function(i){return i._cycle;}))
+    .filter(function(c){ return c !== "확인필요"; })
+    .sort(function(a,b){
+      var ai = ITEMS.filter(function(i){return i._cycle===a;})[0]._cycleStart;
+      var bi = ITEMS.filter(function(i){return i._cycle===b;})[0]._cycleStart;
+      return bi - ai;
+    });
+  fillSelect(periodSel, cyclesByRecency, function(c){ return c===CURRENT_CYCLE.label ? c+" (이번 주)" : c; });
+  if(uniq(ITEMS.map(function(i){return i._cycle;})).indexOf("확인필요")!==-1){
+    var etcOpt = document.createElement("option");
+    etcOpt.value = "확인필요"; etcOpt.textContent = "게시일 확인 필요";
+    periodSel.appendChild(etcOpt);
+  }
+  if(cyclesByRecency.indexOf(CURRENT_CYCLE.label) !== -1){
+    periodSel.value = CURRENT_CYCLE.label;
+    state.period = CURRENT_CYCLE.label;
+  }
+
+  function thumbKey(item){ return "thumb_ovr::"+item.brand+"|"+item.title; }
+  function getThumb(item){
+    try { return localStorage.getItem(thumbKey(item)) || item.thumb; }
+    catch(e){ return item.thumb; }
+  }
+  function setThumbOverride(item, dataUrl){
+    try { localStorage.setItem(thumbKey(item), dataUrl); } catch(e){ alert("이 브라우저에서는 이미지를 저장할 수 없어요."); }
+  }
+  function clearThumbOverride(item){
+    try { localStorage.removeItem(thumbKey(item)); } catch(e){}
+  }
+
+  var thumbFileInput = document.createElement("input");
+  thumbFileInput.type = "file";
+  thumbFileInput.accept = "image/*";
+  thumbFileInput.style.display = "none";
+  document.body.appendChild(thumbFileInput);
+  var editingItemKey = null;
+  thumbFileInput.addEventListener("change", function(){
+    var file = thumbFileInput.files[0];
+    if(!file || !editingItemKey) return;
+    var item = ITEMS.filter(function(i){ return i.brand+"|"+i.title===editingItemKey; })[0];
+    if(!item) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var W=320, H=320;
+        var canvas = document.createElement("canvas");
+        canvas.width=W; canvas.height=H;
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
+        var scale = Math.min(W/img.naturalWidth, H/img.naturalHeight);
+        var nw = img.naturalWidth*scale, nh = img.naturalHeight*scale;
+        ctx.drawImage(img, (W-nw)/2, (H-nh)/2, nw, nh);
+        var fitted = canvas.toDataURL("image/jpeg", 0.88);
+        setThumbOverride(item, fitted);
+        thumbFileInput.value = "";
+        render();
+
+        var safeBrand = item.brand.replace(/[^\w가-힣]/g, "");
+        var safeTitle = item.title.replace(/[^\w가-힣]/g, "").slice(0, 20);
+        var dlName = safeBrand + "_" + safeTitle + ".jpg";
+        canvas.toBlob(function(blob){
+          if(!blob) return;
+          var a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = dlName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function(){ URL.revokeObjectURL(a.href); }, 30000);
+          alert("이미지가 반영됐고, 같은 이름(" + dlName + ")으로 다운로드됐어요.\n팀 전체에 반영하려면 이 파일을 저(Claude)에게 보내주세요.");
+        }, "image/jpeg", 0.88);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function render(){
+    var grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    var filtered = ITEMS.filter(function(i){
+      return (!state.brand || i.brand===state.brand)
+        && (!state.channel || i.channel===state.channel)
+        && (!state.status || i.status===state.status)
+        && (!state.period || i._cycle===state.period);
+    });
+    document.getElementById("result-count").textContent = filtered.length + "건 표시 중";
+
+    filtered.forEach(function(item, idx){
+      var id = item.brand+"|"+item.title;
+      var card = document.createElement("div");
+      card.className = "card";
+      var currentThumb = getThumb(item);
+      var thumbInner = currentThumb
+        ? '<img src="'+currentThumb+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:contain;background:#000;">'
+        : '<span class="mono" style="font-size:11px;">썸네일 없음</span>';
+      var newBadge = (item._cycle === CURRENT_CYCLE.label) ? '<span class="new-badge" title="이번 주(수요일~화요일)에 새로 올라온 콘텐츠예요">NEW</span>' : '';
+      var topicTitle = TOPIC_DESC[item.topic] || "";
+      var statusTitle = STATUS_DESC[item.status] || "";
+      card.innerHTML =
+        '<div class="thumb"><span class="ch-badge">'+channelShort(item.channel)+'</span>'+newBadge+
+          thumbInner+
+          '<div class="chk-wrap"><input type="checkbox" class="chk" data-id="'+id.replace(/"/g,'&quot;')+'" '+(state.selected.has(id)?"checked":"")+'></div>'+
+          '<button type="button" class="edit-thumb-btn" data-edit-id="'+id.replace(/"/g,'&quot;')+'">이미지 편집</button>'+
+        '</div>'+
+        '<div class="body">'+
+          '<div class="brand">'+item.brand+'</div>'+
+          '<div class="title">'+item.title+'</div>'+
+          '<div class="meta"><span class="mono">'+item.date+'</span></div>'+
+          '<div class="tags"><span class="tag" title="'+topicTitle+'">'+item.topic+'</span>'+(item.status!=="실측" ? '<span class="tag status-'+item.status+'" title="'+statusTitle+'">'+statusLabel(item.status)+'</span>' : '')+'</div>'+
+          '<a class="link" href="'+item.url+'" target="_blank" rel="noopener">원문 보기 ↗</a>'+
+        '</div>';
+      grid.appendChild(card);
+    });
+
+    grid.querySelectorAll(".chk").forEach(function(chk){
+      chk.addEventListener("change", function(){
+        var id = chk.getAttribute("data-id");
+        if(chk.checked){ state.selected.add(id); } else { state.selected.delete(id); }
+        updateBottombar();
+      });
+    });
+
+    grid.querySelectorAll(".edit-thumb-btn").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.preventDefault();
+        editingItemKey = btn.getAttribute("data-edit-id");
+        thumbFileInput.click();
+      });
+    });
+  }
+
+  function updateBottombar(){
+    document.getElementById("sel-count").textContent = state.selected.size;
+    document.getElementById("pdf-btn").disabled = state.selected.size === 0;
+    document.getElementById("slack-btn").disabled = state.selected.size === 0;
+  }
+
+  brandSel.addEventListener("change", function(){ state.brand=brandSel.value; render(); });
+  channelSel.addEventListener("change", function(){ state.channel=channelSel.value; render(); });
+  statusSel.addEventListener("change", function(){ state.status=statusSel.value; render(); });
+  periodSel.addEventListener("change", function(){ state.period=periodSel.value; render(); });
+
+  document.getElementById("clear-btn").addEventListener("click", function(){
+    state.selected.clear();
+    render();
+    updateBottombar();
+  });
+
+  function channelSimpleForSlack(ch){
+    if(ch.indexOf("인스타그램")===0) return "인스타그램";
+    if(ch.indexOf("유튜브")===0) return "유튜브";
+    if(ch==="DA") return "메타광고";
+    return ch;
+  }
+  function cleanNoteForSlack(note){
+    var s = String(note||"");
+    var idx = s.indexOf(" · ");
+    return idx===-1 ? s : s.slice(idx+3).trim();
+  }
+  function slackDate(dateStr){
+    var m = String(dateStr||"").match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return dateStr;
+    return m[1].slice(2)+"."+m[2]+"."+m[3];
+  }
+  function buildSlackMessage(items){
+    var today = new Date();
+    var header = "3. 경쟁사 모니터링입니다. (" + slackDate(today.getFullYear()+"-"+pad2(today.getMonth()+1)+"-"+pad2(today.getDate())) + ")";
+    var blocks = items.map(function(it){
+      return "["+it.brand+"/"+channelSimpleForSlack(it.channel)+"] ["+it.title+"] \n- "+cleanNoteForSlack(it.note)+" "+it.url+" ("+slackDate(it.date)+")";
+    });
+    return header + "\n" + blocks.join("\n\n");
+  }
+
+  document.getElementById("slack-btn").addEventListener("click", function(){
+    var chosen = ITEMS.filter(function(i){ return state.selected.has(i.brand+"|"+i.title); });
+    if(!chosen.length) return;
+    document.getElementById("slack-text").value = buildSlackMessage(chosen);
+    document.getElementById("slack-modal").style.display = "flex";
+  });
+  document.getElementById("slack-close-btn").addEventListener("click", function(){
+    document.getElementById("slack-modal").style.display = "none";
+  });
+  document.getElementById("slack-copy-btn").addEventListener("click", function(){
+    var ta = document.getElementById("slack-text");
+    var btn = document.getElementById("slack-copy-btn");
+    function showCopied(){
+      var orig = btn.textContent;
+      btn.textContent = "복사 완료";
+      setTimeout(function(){ btn.textContent = orig; }, 1500);
+    }
+    function fallbackCopy(){
+      ta.focus(); ta.select();
+      try{ document.execCommand("copy"); showCopied(); }catch(e){ alert("복사에 실패했어요. 직접 선택해서 복사해주세요."); }
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(showCopied).catch(fallbackCopy);
+    } else {
+      fallbackCopy();
+    }
+  });
+
+  var colWidth = 380, labelWidth = 120;
+  var BRAND_COLOR = {
+    "미래에셋증권":"#F26A21",
+    "삼성증권":"#1428A0",
+    "키움증권":"#E6007E",
+    "한국투자증권":"#6B4FA0",
+    "토스증권":"#0064FF",
+    "NH투자증권":"#00A651",
+    "신한투자증권":"#0046FF"
+  };
+  var CHANNEL_LABEL = {
+    "인스타그램/캐러셀이미지":"인스타그램 / 캐러셀",
+    "인스타그램/영상":"인스타그램 / 릴스",
+    "유튜브/영상":"유튜브 / 영상",
+    "DA":"DA"
+  };
+
+  function ymd(d){ return String(d.getFullYear()).slice(2)+pad2(d.getMonth()+1)+pad2(d.getDate()); }
+
+  var thumbFitCache = {};
+  function fitImageToDataURL(url, w, h){
+    var key = url+"|"+w+"x"+h;
+    if(thumbFitCache[key]) return Promise.resolve(thumbFitCache[key]);
+    return new Promise(function(resolve){
+      var img = new Image();
+      img.onload = function(){
+        var canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#000"; ctx.fillRect(0,0,w,h);
+        var scale = Math.min(w/img.naturalWidth, h/img.naturalHeight);
+        var nw = img.naturalWidth*scale, nh = img.naturalHeight*scale;
+        ctx.drawImage(img, (w-nw)/2, (h-nh)/2, nw, nh);
+        var data;
+        try { data = canvas.toDataURL("image/jpeg", 0.9); }
+        catch(e){ data = null; }
+        thumbFitCache[key] = data;
+        resolve(data);
+      };
+      img.onerror = function(){ resolve(null); };
+      img.src = url;
+    });
+  }
+
+  var PAGE_COLS = 2, PAGE_ROWS = 4; // 한 페이지에 최대 2개씩 4줄(8개)을 쌓아, 세로형(모바일)에 어울리는 폭을 유지하면서 페이지를 채운다
+
+  function buildBlockTableHTML(items, thumbMap, isLast){
+    var groups = [];
+    items.forEach(function(it){
+      var last = groups[groups.length-1];
+      if(last && last.brand===it.brand){ last.items.push(it); } else { groups.push({brand:it.brand, items:[it]}); }
+    });
+    var td = 'style="padding:6px 14px;"';
+    var html = '<table style="border-collapse:collapse;width:'+(items.length*colWidth+labelWidth)+'px;table-layout:fixed;">';
+    html += '<colgroup><col style="width:'+labelWidth+'px;">'+items.map(function(){return '<col style="width:'+colWidth+'px;">';}).join('')+'</colgroup>';
+
+    function labelCell(label){ return '<td style="padding:6px 14px;font-size:10px;font-weight:700;color:#9a9a9a;letter-spacing:.04em;text-transform:uppercase;vertical-align:middle;">'+label+'</td>'; }
+
+    html += '<tr>'+labelCell('경쟁사명');
+    groups.forEach(function(g){
+      var color = BRAND_COLOR[g.brand] || '#333';
+      html += '<td colspan="'+g.items.length+'" style="padding:8px 14px 10px;border-bottom:2px solid '+color+';color:'+color+';font-weight:800;font-size:15px;">'+g.brand+'</td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('이미지');
+    items.forEach(function(it){
+      var fitted = thumbMap[it.brand+"|"+it.title];
+      var img = fitted
+        ? '<img src="'+fitted+'" style="display:block;width:100%;height:220px;border-radius:4px;">'
+        : '<div style="width:100%;height:220px;display:flex;align-items:center;justify-content:center;color:#999;background:#f7f7f7;border-radius:4px;">썸네일 없음</div>';
+      html += '<td '+td+'><div style="padding-top:10px;">'+img+'</div></td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('타이틀');
+    items.forEach(function(it){
+      html += '<td '+td+' style="padding:8px 14px;text-align:left;font-size:13.5px;font-weight:700;line-height:1.45;word-break:keep-all;color:#161616;">'+it.title+'</td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('URL');
+    items.forEach(function(it){
+      var linkText = it.channel==="DA" ? "이벤트 페이지" : it.url;
+      html += '<td style="padding:4px 14px;text-align:left;font-size:11px;word-break:break-all;"><a href="'+it.url+'" style="color:#6b6b6b;text-decoration:none;border-bottom:1px solid #d8d8d8;">'+linkText+'</a></td>';
+    });
+    html += '</tr>';
+
+    html += '<tr>'+labelCell('채널/유형');
+    items.forEach(function(it){
+      html += '<td style="padding:4px 14px 14px;text-align:left;font-size:11.5px;color:#6b6b6b;'+(isLast?'':'border-bottom:1px dotted #ddd;padding-bottom:16px;')+'">'+(CHANNEL_LABEL[it.channel]||it.channel)+'</td>';
+    });
+    html += '</tr>';
+
+    html += '</table>';
+    return html;
+  }
+
+  function buildReportPageHTML(headerTitle, items, thumbMap){
+    var pageWidthPx = PAGE_COLS*colWidth + labelWidth + 40;
+    var html = '<div style="font-family:\'Noto Sans KR\',sans-serif;width:'+pageWidthPx+'px;padding:28px 24px;background:#fff;color:#111;">';
+    html += '<div style="font-size:17px;font-weight:800;letter-spacing:-.01em;padding-bottom:14px;margin-bottom:6px;border-bottom:1px solid #111;">'+headerTitle+'</div>';
+    var rowBlocks = [];
+    for(var i=0;i<items.length;i+=PAGE_COLS){ rowBlocks.push(items.slice(i, i+PAGE_COLS)); }
+    rowBlocks.forEach(function(rowItems, idx){
+      html += buildBlockTableHTML(rowItems, thumbMap, idx===rowBlocks.length-1);
+    });
+    html += '</div>';
+    return html;
+  }
+
+  document.getElementById("pdf-btn").addEventListener("click", async function(){
+    var chosen = ITEMS.filter(function(i){ return state.selected.has(i.brand+"|"+i.title); });
+    if(!chosen.length) return;
+
+    var jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if(!jsPDFCtor || !window.html2canvas){ alert("PDF 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."); return; }
+
+    var pdfBtn = document.getElementById("pdf-btn");
+    pdfBtn.disabled = true;
+    var pdfBtnLabel = pdfBtn.textContent;
+    pdfBtn.textContent = "PDF 만드는 중...";
+
+    try {
+      var today = new Date();
+      var reportCode = ymd(today);
+      var dates = chosen.map(function(i){ return extractDate(i.date); }).filter(Boolean);
+      var periodStr = "";
+      if(dates.length){
+        var minD = new Date(Math.min.apply(null, dates));
+        var maxD = new Date(Math.max.apply(null, dates));
+        periodStr = ymd(minD)+"~"+ymd(maxD);
+      }
+      var headerTitle = reportCode + " (모니터링 기간 | " + (periodStr || "선택 콘텐츠") + ")";
+
+      var thumbMap = {};
+      await Promise.all(chosen.map(async function(it){
+        var src = getThumb(it);
+        if(!src) return;
+        var data = src.indexOf("data:") === 0 ? src : await fitImageToDataURL(src, 720, 440);
+        if(data) thumbMap[it.brand+"|"+it.title] = data;
+      }));
+
+      var pageSize = PAGE_COLS*PAGE_ROWS;
+      var pages = [];
+      for(var i=0;i<chosen.length;i+=pageSize){ pages.push(chosen.slice(i,i+pageSize)); }
+
+      var container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-99999px";
+      container.style.top = "0";
+      document.body.appendChild(container);
+
+      var doc = new jsPDFCtor({ orientation:"portrait", unit:"pt", format:"a4" });
+      var pageW = doc.internal.pageSize.getWidth();
+      var pageH = doc.internal.pageSize.getHeight();
+      // 페이지마다 항목 수가 달라도 셀 크기가 같아 보이도록, 한 줄 최대 칸수(PAGE_COLS) 기준으로 배율을 고정한다
+      var fullPagePxWidth = (PAGE_COLS*colWidth + labelWidth + 40) * 2;
+      var masterRatio = (pageW-40) / fullPagePxWidth;
+
+      for(var p=0; p<pages.length; p++){
+        container.innerHTML = buildReportPageHTML(headerTitle, pages[p], thumbMap);
+        var imgs = container.querySelectorAll("img");
+        await Promise.all(Array.from(imgs).map(function(im){
+          return im.complete ? Promise.resolve() : new Promise(function(res){ im.onload=res; im.onerror=res; });
+        }));
+        var canvas = await html2canvas(container, { scale:2, backgroundColor:"#ffffff", useCORS:true });
+        var imgData = canvas.toDataURL("image/jpeg", 0.92);
+        var w = canvas.width*masterRatio, h = canvas.height*masterRatio;
+        var x = Math.max(20, (pageW-w)/2);
+        var y = 20;
+        if(p>0) doc.addPage();
+        doc.addImage(imgData, "JPEG", x, y, w, h);
+      }
+
+      document.body.removeChild(container);
+
+      var fname = ymd(new Date()) + "_SNS모니터링.pdf";
+      var blob = doc.output("blob");
+
+      if(window.claude && window.claude.use){
+        window.claude.use("downloads").then(function(downloads){
+          if(!downloads){ fallbackOpen(blob, fname); return; }
+          downloads.save({ filename: fname, data: blob }).catch(function(){
+            fallbackOpen(blob, fname);
+          });
+        }).catch(function(){ fallbackOpen(blob, fname); });
+      } else {
+        fallbackOpen(blob, fname);
+      }
+    } catch(e){
+      alert("PDF 생성 중 문제가 발생했습니다: " + e.message);
+    } finally {
+      pdfBtn.disabled = state.selected.size === 0;
+      pdfBtn.textContent = pdfBtnLabel;
+    }
+  });
+
+  function fallbackOpen(blob, fname){
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 30000);
+  }
+
+  function renderStatusBanner(){
+    var banner = document.getElementById("status-banner");
+    var meta = document.getElementById("status-banner-meta");
+    if(!banner) return;
+    var ig = SYSTEM_STATUS.instagram;
+    if(ig && ig.ok === false){
+      banner.style.display = "flex";
+      meta.textContent = "마지막 확인: " + ig.checkedAt + (ig.note ? " · " + ig.note : "");
+    } else {
+      banner.style.display = "none";
+    }
+  }
+  renderStatusBanner();
+
+  render();
+  updateBottombar();
+})();
+</script>
