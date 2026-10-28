@@ -1228,19 +1228,17 @@
       container.style.top = "0";
       document.body.appendChild(container);
 
-      var base = ymd(new Date()) + "_SNS모니터링";
-      for(var p=0; p<prep.pages.length; p++){
-        container.innerHTML = buildReportPageHTML(prep.headerTitle, prep.pages[p], prep.thumbMap);
-        var imgs = container.querySelectorAll("img");
-        await Promise.all(Array.from(imgs).map(function(im){
-          return im.complete ? Promise.resolve() : new Promise(function(res){ im.onload=res; im.onerror=res; });
-        }));
-        var canvas = await html2canvas(container, { scale:2, backgroundColor:"#ffffff", useCORS:true });
-        var blob = await new Promise(function(res){ canvas.toBlob(res, "image/jpeg", 0.92); });
-        var fname = base + (prep.pages.length > 1 ? "_" + (p+1) : "") + ".jpg";
-        fallbackOpen(blob, fname);
-        if(p < prep.pages.length-1) await new Promise(function(res){ setTimeout(res, 400); });
-      }
+      container.innerHTML = buildReportPageHTML(prep.headerTitle, chosen, prep.thumbMap);
+      var imgs = container.querySelectorAll("img");
+      await Promise.all(Array.from(imgs).map(function(im){
+        return im.complete ? Promise.resolve() : new Promise(function(res){ im.onload=res; im.onerror=res; });
+      }));
+      // 브라우저 캔버스 높이 한도(약 16000px)를 넘지 않도록, 항목이 많으면 배율을 낮춘다
+      var scale = Math.min(2, 15000 / Math.max(container.offsetHeight, 1));
+      var canvas = await html2canvas(container, { scale:scale, backgroundColor:"#ffffff", useCORS:true });
+      var blob = await new Promise(function(res){ canvas.toBlob(res, "image/jpeg", 0.92); });
+      if(!blob) throw new Error("이미지 변환에 실패했어요. 선택 항목 수를 줄여서 다시 시도해주세요.");
+      fallbackOpen(blob, ymd(new Date()) + "_SNS모니터링.jpg");
     } catch(e){
       alert("JPG 생성 중 문제가 발생했습니다: " + e.message);
     } finally {
