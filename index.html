@@ -316,6 +316,7 @@
     <div class="spacer"></div>
     <button class="btn ghost" id="clear-btn">선택 초기화</button>
     <button class="btn ghost" id="slack-btn" disabled>메시지 만들기</button>
+    <button class="btn ghost" id="jpg-btn" disabled>선택 콘텐츠 JPG로 다운로드</button>
     <button class="btn primary" id="pdf-btn" disabled>선택 콘텐츠 PDF로 다운로드</button>
   </div>
 </div>
@@ -1006,6 +1007,7 @@
   function updateBottombar(){
     document.getElementById("sel-count").textContent = state.selected.size;
     document.getElementById("pdf-btn").disabled = state.selected.size === 0;
+    document.getElementById("jpg-btn").disabled = state.selected.size === 0;
     document.getElementById("slack-btn").disabled = state.selected.size === 0;
   }
 
@@ -1184,6 +1186,70 @@
     return html;
   }
 
+  async function prepareReport(chosen){
+    var reportCode = ymd(new Date());
+    var dates = chosen.map(function(i){ return extractDate(i.date); }).filter(Boolean);
+    var periodStr = "";
+    if(dates.length){
+      var minD = new Date(Math.min.apply(null, dates));
+      var maxD = new Date(Math.max.apply(null, dates));
+      periodStr = ymd(minD)+"~"+ymd(maxD);
+    }
+    var headerTitle = reportCode + " (모니터링 기간 | " + (periodStr || "선택 콘텐츠") + ")";
+    var thumbMap = {};
+    await Promise.all(chosen.map(async function(it){
+      var src = getThumb(it);
+      if(!src) return;
+      var data = src.indexOf("data:") === 0 ? src : await fitImageToDataURL(src, 720, 440);
+      if(data) thumbMap[it.brand+"|"+it.title] = data;
+    }));
+    var pageSize = PAGE_COLS*PAGE_ROWS;
+    var pages = [];
+    for(var i=0;i<chosen.length;i+=pageSize){ pages.push(chosen.slice(i,i+pageSize)); }
+    return { headerTitle:headerTitle, thumbMap:thumbMap, pages:pages };
+  }
+
+  document.getElementById("jpg-btn").addEventListener("click", async function(){
+    var chosen = ITEMS.filter(function(i){ return state.selected.has(i.brand+"|"+i.title); });
+    if(!chosen.length) return;
+    if(!window.html2canvas){ alert("이미지 라이브러리를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."); return; }
+
+    var jpgBtn = document.getElementById("jpg-btn");
+    jpgBtn.disabled = true;
+    var jpgBtnLabel = jpgBtn.textContent;
+    jpgBtn.textContent = "JPG 만드는 중...";
+    var container = null;
+
+    try {
+      var prep = await prepareReport(chosen);
+      container = document.createElement("div");
+      container.style.position = "fixed";
+      container.style.left = "-99999px";
+      container.style.top = "0";
+      document.body.appendChild(container);
+
+      var base = ymd(new Date()) + "_SNS모니터링";
+      for(var p=0; p<prep.pages.length; p++){
+        container.innerHTML = buildReportPageHTML(prep.headerTitle, prep.pages[p], prep.thumbMap);
+        var imgs = container.querySelectorAll("img");
+        await Promise.all(Array.from(imgs).map(function(im){
+          return im.complete ? Promise.resolve() : new Promise(function(res){ im.onload=res; im.onerror=res; });
+        }));
+        var canvas = await html2canvas(container, { scale:2, backgroundColor:"#ffffff", useCORS:true });
+        var blob = await new Promise(function(res){ canvas.toBlob(res, "image/jpeg", 0.92); });
+        var fname = base + (prep.pages.length > 1 ? "_" + (p+1) : "") + ".jpg";
+        fallbackOpen(blob, fname);
+        if(p < prep.pages.length-1) await new Promise(function(res){ setTimeout(res, 400); });
+      }
+    } catch(e){
+      alert("JPG 생성 중 문제가 발생했습니다: " + e.message);
+    } finally {
+      if(container && container.parentNode) container.parentNode.removeChild(container);
+      jpgBtn.disabled = state.selected.size === 0;
+      jpgBtn.textContent = jpgBtnLabel;
+    }
+  });
+
   document.getElementById("pdf-btn").addEventListener("click", async function(){
     var chosen = ITEMS.filter(function(i){ return state.selected.has(i.brand+"|"+i.title); });
     if(!chosen.length) return;
@@ -1197,28 +1263,8 @@
     pdfBtn.textContent = "PDF 만드는 중...";
 
     try {
-      var today = new Date();
-      var reportCode = ymd(today);
-      var dates = chosen.map(function(i){ return extractDate(i.date); }).filter(Boolean);
-      var periodStr = "";
-      if(dates.length){
-        var minD = new Date(Math.min.apply(null, dates));
-        var maxD = new Date(Math.max.apply(null, dates));
-        periodStr = ymd(minD)+"~"+ymd(maxD);
-      }
-      var headerTitle = reportCode + " (모니터링 기간 | " + (periodStr || "선택 콘텐츠") + ")";
-
-      var thumbMap = {};
-      await Promise.all(chosen.map(async function(it){
-        var src = getThumb(it);
-        if(!src) return;
-        var data = src.indexOf("data:") === 0 ? src : await fitImageToDataURL(src, 720, 440);
-        if(data) thumbMap[it.brand+"|"+it.title] = data;
-      }));
-
-      var pageSize = PAGE_COLS*PAGE_ROWS;
-      var pages = [];
-      for(var i=0;i<chosen.length;i+=pageSize){ pages.push(chosen.slice(i,i+pageSize)); }
+      var prep = await prepareReport(chosen);
+      var headerTitle = prep.headerTitle, thumbMap = prep.thumbMap, pages = prep.pages;
 
       var container = document.createElement("div");
       container.style.position = "fixed";
