@@ -235,6 +235,8 @@
   .btn.primary:disabled{background:var(--border);color:var(--ink-soft);cursor:not-allowed;}
   .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--border);}
   .btn.ghost:disabled{opacity:.5;cursor:not-allowed;}
+  .btn.blue{background:#2F6FDB;color:#fff;}
+  .btn.blue:disabled{background:var(--border);color:var(--ink-soft);cursor:not-allowed;}
 
   .slack-modal{
     position:fixed;inset:0;background:rgba(15,18,23,.5);
@@ -316,7 +318,7 @@
     <div class="spacer"></div>
     <button class="btn ghost" id="clear-btn">선택 초기화</button>
     <button class="btn ghost" id="slack-btn" disabled>메시지 만들기</button>
-    <button class="btn ghost" id="jpg-btn" disabled>선택 콘텐츠 JPG로 다운로드</button>
+    <button class="btn blue" id="jpg-btn" disabled>선택 콘텐츠 JPG로 다운로드</button>
     <button class="btn primary" id="pdf-btn" disabled>선택 콘텐츠 PDF로 다운로드</button>
   </div>
 </div>
